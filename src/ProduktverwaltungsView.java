@@ -2,27 +2,24 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.*;
+import java.util.List;
+
 /**
  * GUI-Oberfläche für den Geschäftsführer zur Verwaltung von Produkten.
  * Produkte können hinzugefügt, entfernt, angezeigt und bearbeitet werden.
  */
-public class ProduktverwaltungsView extends View{
+public class ProduktverwaltungsView extends View {
 
-    /** Eingabefelder für Produktinformationen */
     private JTextField nameField, ortField, lageranzahlField, regalanzahlField, preisField, einkaufspreisField, verkaufszahlenField, einkaufszahlenField;
-    /** Buttons zum Hinzufügen, Entfernen und Speichern */
     private JButton einfuegenButton, entfernenButton, speichernButton;
-    /** Liste zur Anzeige der vorhandenen Produkte */
     private JList<String> produktListe;
-    /** Model für die Produktliste */
     private DefaultListModel<String> produktListModel;
-    /** Instanz des Geschäftsführers */
     private Geschaeftsfuehrer geschaeftsfuehrer;
 
-    /**
-     * Konstruktor: Erstellt die grafische Oberfläche und initialisiert alle Komponenten.
-     * @param datenbank Gemeinsame Produkt-Datenbank
-     */
     public ProduktverwaltungsView(Geschaeftsfuehrer geschaeftsfuehrer) {
         this.geschaeftsfuehrer = geschaeftsfuehrer;
 
@@ -31,6 +28,7 @@ public class ProduktverwaltungsView extends View{
         frame.setSize(700, 600);
         frame.setLayout(new BorderLayout());
         frame.setResizable(false);
+        frame.setLocationRelativeTo(null);
 
         JPanel eingabePanel = new JPanel(new GridLayout(8, 2, 5, 5));
         eingabePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -100,12 +98,8 @@ public class ProduktverwaltungsView extends View{
                         einkaufspreisField.setText(String.valueOf(p.getEinkaufspreis()));
                         verkaufszahlenField.setText(String.valueOf(p.getVerkaufszahlen()));
                         einkaufszahlenField.setText(String.valueOf(p.getEinkaufszahlen()));
-                        if (!lageranzahlField.getText().trim().isEmpty()) {
-                            lageranzahlField.setText(String.valueOf(p.getLageranzahl()));
-                        }
-                        if (!regalanzahlField.getText().trim().isEmpty()) {
-                            regalanzahlField.setText(String.valueOf(p.getRegalanzahl()));
-                        }
+                        lageranzahlField.setText(String.valueOf(p.getLageranzahl()));
+                        regalanzahlField.setText(String.valueOf(p.getRegalanzahl()));
                     } else if (SwingUtilities.isRightMouseButton(evt)) {
                         nameField.setText("");
                         ortField.setText("Lager");
@@ -131,6 +125,7 @@ public class ProduktverwaltungsView extends View{
         buttonPanel.add(speichernButton);
         frame.add(buttonPanel, BorderLayout.SOUTH);
 
+        // Produkt hinzufügen: Lageranzahl = Einkaufszahlen, anschließend alphabetisch einsortieren
         einfuegenButton.addActionListener(e -> {
             try {
                 String name = nameField.getText().trim();
@@ -141,22 +136,19 @@ public class ProduktverwaltungsView extends View{
                 int einkaufszahlen = Integer.parseInt(einkaufszahlenField.getText().trim());
                 String ort = ortField.getText().trim();
 
-                //evtl. gleich einkaufszahl setzen?
-                // int lageranzahl = einkaufszahlen;
-                int lageranzahl = 0;
+                int lageranzahl = einkaufszahlen;
                 int regalanzahl = 0;
                 int verkaufszahlen = 0;
 
                 geschaeftsfuehrer.produktEinfuegen(lageranzahl, regalanzahl, preis, einkaufspreis, name, ort, verkaufszahlen, einkaufszahlen);
-                produktListModel.addElement(name);
-                geschaeftsfuehrer.produkteSpeichern(); // Speicherung in CSV über Datenbank
+                produktListeSortiertEinfügen(name);
+                geschaeftsfuehrer.produkteSpeichern();
 
                 nameField.setText("");
                 preisField.setText("");
                 einkaufspreisField.setText("");
                 einkaufszahlenField.setText("");
-                //evtl. gleich einkaufszahlen setzen?
-                lageranzahlField.setText("0");
+                lageranzahlField.setText(String.valueOf(lageranzahl));
 
                 JOptionPane.showMessageDialog(frame, "Produkt erfolgreich hinzugefügt.", "Erfolg", JOptionPane.INFORMATION_MESSAGE);
             } catch (NumberFormatException ex) {
@@ -166,18 +158,38 @@ public class ProduktverwaltungsView extends View{
             }
         });
 
+        // Produkt entfernen
+// Produkt entfernen: Nach dem Entfernen werden auch die Eingabefelder geleert
         entfernenButton.addActionListener(e -> {
             String selected = produktListe.getSelectedValue();
+
+            // Abbrechen, wenn kein Produkt ausgewählt wurde
             if (selected == null) {
                 JOptionPane.showMessageDialog(frame, "Bitte ein Produkt auswählen.", "Fehler", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+
+            // Produkt aus der Datenbank entfernen und Liste aktualisieren
             geschaeftsfuehrer.produktEntfernen(selected);
             produktListModel.removeElement(selected);
-            geschaeftsfuehrer.produkteSpeichern(); // Speicherung nach dem Entfernen
+            geschaeftsfuehrer.produkteSpeichern();
+
+            // Eingabefelder zurücksetzen
+            nameField.setText("");
+            ortField.setText("Lager");
+            lageranzahlField.setText("0");
+            regalanzahlField.setText("0");
+            preisField.setText("");
+            einkaufspreisField.setText("");
+            verkaufszahlenField.setText("0");
+            einkaufszahlenField.setText("");
+            produktListe.clearSelection();
+
+            // Rückmeldung an den Benutzer
             JOptionPane.showMessageDialog(frame, "Produkt entfernt.", "Erfolg", JOptionPane.INFORMATION_MESSAGE);
         });
 
+        // Produkt speichern: bei Namensänderung wird alphabetisch einsortiert
         speichernButton.addActionListener(e -> {
             String selectedName = produktListe.getSelectedValue();
             if (selectedName == null) {
@@ -195,16 +207,13 @@ public class ProduktverwaltungsView extends View{
                 p.setEinkaufspreis(Double.parseDouble(einkaufspreisField.getText().trim()));
                 p.setVerkaufszahlen(Integer.parseInt(verkaufszahlenField.getText().trim()));
                 p.setEinkaufszahlen(Integer.parseInt(einkaufszahlenField.getText().trim()));
+                p.setLageranzahl(Integer.parseInt(lageranzahlField.getText().trim()));
+                p.setRegalanzahl(Integer.parseInt(regalanzahlField.getText().trim()));
 
-                if (!lageranzahlField.getText().trim().isEmpty()) {
-                    p.setLageranzahl(Integer.parseInt(lageranzahlField.getText().trim()));
-                }
-                if (!regalanzahlField.getText().trim().isEmpty()) {
-                    p.setRegalanzahl(Integer.parseInt(regalanzahlField.getText().trim()));
-                }
+                geschaeftsfuehrer.produkteSpeichern();
 
-                produktListModel.setElementAt(p.getName(), produktListe.getSelectedIndex());
-                geschaeftsfuehrer.produkteSpeichern(); // Speicherung nach Bearbeitung
+                produktListModel.removeElementAt(produktListe.getSelectedIndex());
+                produktListeSortiertEinfügen(p.getName());
 
                 JOptionPane.showMessageDialog(frame, "Produkt aktualisiert.", "Erfolg", JOptionPane.INFORMATION_MESSAGE);
             } catch (NumberFormatException ex) {
@@ -213,5 +222,22 @@ public class ProduktverwaltungsView extends View{
         });
 
         frame.setVisible(true);
+    }
+
+    /**
+     * Fügt einen Produktnamen alphabetisch sortiert in die Liste ein.
+     * Wird nach Hinzufügen und Namensänderungen verwendet.
+     */
+    private void produktListeSortiertEinfügen(String name) {
+        List<String> produkte = new ArrayList<>();
+        for (int i = 0; i < produktListModel.size(); i++) {
+            produkte.add(produktListModel.getElementAt(i));
+        }
+        produkte.add(name);
+        Collections.sort(produkte);
+        produktListModel.clear();
+        for (String p : produkte) {
+            produktListModel.addElement(p);
+        }
     }
 }

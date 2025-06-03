@@ -23,11 +23,14 @@ public class Dashboard {
         // Setzen des Layouts des Fensters (2 Zeilen, 3 Spalten, 10 Pixel Abstand)
         frame.setLayout(new GridLayout(2, 3, 10, 10));
 
+        //Position in die Mitte des Bildschirms setzen
+        frame.setLocationRelativeTo(null);
+
         // Erstellen der Buttons für die verschiedenen Rollen und Funktionen
         JButton btnKassierer = new JButton("Kassierer");
         JButton btnLager = new JButton("Lagermitarbeiter");
         JButton btnKunde = new JButton("Kunde");
-        JButton btnGeschaeftsfuehrer = new JButton("Geschaeftsfuehrer");
+        JButton btnGeschaeftsfuehrer = new JButton("Geschäftsführer");
 
         // Hinzufügen von ActionListenern zu den Buttons, um die entsprechenden Views zu öffnen
         btnKassierer.addActionListener(e -> new KassiererView(datenbank, beliebtheitsgraph));

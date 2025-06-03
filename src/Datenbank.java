@@ -1,6 +1,8 @@
 import java.io.*;
 import java.util.Comparator;
 import java.util.LinkedList;
+import java.time.LocalDate;
+import java.nio.file.*;
 
 /**
  * Zentrale Datenhaltung für Produkte und Finanzen des Supermarkts
@@ -18,6 +20,10 @@ public class Datenbank {
      * Liste aller Tagesumsätze
      */
     private LinkedList<Double> tage;
+    /**
+     * Pfad zur Datei, in der das Datum des letzten Tagesabschlusses gespeichert wird
+     */
+    private static final String STATUS_DATEI = "tagstatus.txt";
 
     /**
      * erzeugt eine neue Datenbank, lädt Produkte und Finanzen aus Dateien
@@ -332,5 +338,33 @@ public class Datenbank {
             // Bei einem Fehler während des Schreibens in die Datei
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Speichert das Datum des letzten abgeschlossenen Tages in die Datei "tagstatus.txt"
+     * @param datum Datum des Tagesabschlusses
+     */
+    public void speichereLetztesDatum(LocalDate datum) {
+        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get(STATUS_DATEI))) {
+            writer.write(datum.toString()); // Format: yyyy-MM-dd
+        } catch (IOException e) {
+            System.err.println("Fehler beim Speichern des Tagesabschluss-Datums: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Lädt das Datum des letzten abgeschlossenen Tages aus der Datei "tagstatus.txt"
+     * @return LocalDate des letzten Abschlusses oder null, wenn keine Datei vorhanden ist
+     */
+    public LocalDate ladeLetztesDatum() {
+        try {
+            String zeile = Files.readString(Paths.get(STATUS_DATEI)).trim();
+            if (!zeile.isEmpty()) {
+                return LocalDate.parse(zeile); // erwartet Format yyyy-MM-dd
+            }
+        } catch (IOException e) {
+            // Datei existiert nicht oder konnte nicht gelesen werden
+        }
+        return null;
     }
 }

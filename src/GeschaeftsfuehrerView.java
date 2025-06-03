@@ -8,6 +8,7 @@ public class GeschaeftsfuehrerView {
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setSize(500, 250);
         frame.setLayout(new GridLayout(1, 2));
+        frame.setLocationRelativeTo(null);
 
         JButton btnProduktverwaltung = new JButton("Produktverwaltung");
         JButton btnFinanzen = new JButton("Finanzen");

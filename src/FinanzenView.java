@@ -36,6 +36,7 @@ public class FinanzenView extends View {
         frame.setSize(500, 500);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.setLayout(new BorderLayout());
+        frame.setLocationRelativeTo(null);
 
         // Oben: Zusammenfassung der Finanzdaten
         JPanel summaryPanel = new JPanel(new GridLayout(4, 1));

@@ -35,6 +35,7 @@ public class LagermitarbeiterView extends View {
         frame.setLayout(new GridLayout(4, 1));
         frame.setResizable(false);
         frame.setLocation(700, 500);
+		frame.setLocationRelativeTo(null);
         
         ort = new JButton("Ort verändern");
         regal = new JButton("Regalanzahl verändern");
